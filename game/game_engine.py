@@ -1,7 +1,7 @@
 import pygame
+import random
 from game.player import Player
 from game.anvil import Anvil
-
 
 class GameEngine:
     def __init__(self, width, height):
@@ -9,6 +9,7 @@ class GameEngine:
         self.height = height
         self.player = Player(width, height)
         self.anvils = []
+        self.particles = []
 
         self.spawn_delay = 700
         self.last_spawn_time = pygame.time.get_ticks()
@@ -55,11 +56,29 @@ class GameEngine:
                 self.game_state = "GAME_OVER"
 
             if anvil.is_off_screen(self.height):
+            # Create dust particles at the impact position
+                for _ in range(8):
+                    self.particles.append({
+                    "x": anvil.x + anvil.width // 2,
+                    "y": self.height - 20,
+                    "vx": random.uniform(-3, 3),
+                    "vy": random.uniform(-4, -1),
+                    "life": 30})
                 self.anvils.remove(anvil)
+        
+        # Update dust particles
+        for particle in self.particles[:]:
+            particle["x"] += particle["vx"]
+            particle["y"] += particle["vy"]
+            particle["vy"] += 0.2
+            particle["life"] -= 1
+            if particle["life"] <= 0:
+                self.particles.remove(particle)
 
     def reset(self):
         self.player = Player(self.width, self.height)
         self.anvils.clear()
+        self.particles.clear()
         self.spawn_delay = 700
         self.start_ticks = pygame.time.get_ticks()
         self.last_spawn_time = pygame.time.get_ticks()
@@ -76,6 +95,13 @@ class GameEngine:
         self.player.render(screen)
         for anvil in self.anvils:
             anvil.render(screen)
+        # Render dust particles
+        for particle in self.particles:
+            pygame.draw.circle(
+            screen,
+            (180, 160, 130),
+            (int(particle["x"]), int(particle["y"])),
+            3)
 
         time_surf = self.font_medium.render(f"Survival Time: {self.survival_time}s", True, (240, 240, 240))
         screen.blit(time_surf, (20, 20))
