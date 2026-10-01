@@ -19,9 +19,12 @@ class Player:
         self.x += self.speed
 
     def update(self):
-        #BUG SYMPTOM: 
-        #Player can move completely off-screen
-        pass
+        # Keep player within screen boundaries
+        if self.x < 0:
+            self.x = 0
+
+        if self.x + self.width > self.screen_width:
+            self.x = self.screen_width - self.width
 
     @property
     def rect(self):
